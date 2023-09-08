@@ -1,6 +1,5 @@
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import NoSuchWindowException
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
@@ -271,154 +270,151 @@ janela5 = janela_contatos()
 janela5.hide()
 
 while True:
-    try:
-        login = verificar_login()
-        window, event, values = sg.read_all_windows(timeout=1000)
-        if window == janela1: # Janela para inserir número
-            if event == sg.WINDOW_CLOSED:
-                navegador.quit()
-                break
+    login = verificar_login()
+    window, event, values = sg.read_all_windows(timeout=1000)
+    if window == janela1: # Janela para inserir número
+        if event == sg.WINDOW_CLOSED:
+            navegador.quit()
+            break
 
 
-            if not str(values['numero']).isnumeric():
-                window['numero'].update(values['numero'][:-1])
+        if not str(values['numero']).isnumeric():
+            window['numero'].update(values['numero'][:-1])
 
 
-            if len(values['numero']) == 12:
-                window['numero'].update(values['numero'][:-1])
+        if len(values['numero']) == 12:
+            window['numero'].update(values['numero'][:-1])
 
-            if len(values['numero']) >= 11:
-                checar_numero = phonenumbers.parse('+55'+values['numero'])
-                checar_numero = phonenumbers.is_valid_number(checar_numero)
-                if checar_numero:
-                    window['botão_enviar_código_ativação'].update(disabled=False)
-                    window['msg_numero_invalido'].update(visible=False)
-                else:
-                    window['msg_numero_invalido'].update('Insira um número de telefone válido')
+        if len(values['numero']) >= 11:
+            checar_numero = phonenumbers.parse('+55'+values['numero'])
+            checar_numero = phonenumbers.is_valid_number(checar_numero)
+            if checar_numero:
+                window['botão_enviar_código_ativação'].update(disabled=False)
+                window['msg_numero_invalido'].update(visible=False)
+            else:
+                window['msg_numero_invalido'].update('Insira um número de telefone válido')
 
-            if len(values['numero']) < 11:
-                window['botão_enviar_código_ativação'].update(disabled=True)
-                window['msg_numero_invalido'].update(visible=True)
-                window['msg_numero_invalido'].update('')
+        if len(values['numero']) < 11:
+            window['botão_enviar_código_ativação'].update(disabled=True)
+            window['msg_numero_invalido'].update(visible=True)
+            window['msg_numero_invalido'].update('')
 
-            if event == 'botão_enviar_código_ativação':
-                sg.popup_no_buttons('Aguarde: gerando código de ativação...',
-                                    auto_close=True,
-                                    non_blocking=True,
-                                    keep_on_top=True,
-                                    no_titlebar=True,
-                                    font=(15, 15))
-                numero = values['numero']
-                janela1.hide()
-                janela2 = janela_codigo_ativacao()
-
-        if login == True and janela2 != None:
-            janela2.close()
-            janela2 = None
-            sg.popup_no_buttons('WhatsApp conectado com sucesso!',
+        if event == 'botão_enviar_código_ativação':
+            sg.popup_no_buttons('Aguarde: gerando código de ativação...',
                                 auto_close=True,
                                 non_blocking=True,
                                 keep_on_top=True,
                                 no_titlebar=True,
                                 font=(15, 15))
-            sleep(3)
-            janela3 = janela_mensagem()
-            login = False
-            window, event, values = sg.read_all_windows()
+            numero = values['numero']
+            janela1.hide()
+            janela2 = janela_codigo_ativacao()
+
+    if login == True and janela2 != None:
+        janela2.close()
+        janela2 = None
+        sg.popup_no_buttons('WhatsApp conectado com sucesso!',
+                            auto_close=True,
+                            non_blocking=True,
+                            keep_on_top=True,
+                            no_titlebar=True,
+                            font=(15, 15))
+        sleep(3)
+        janela3 = janela_mensagem()
+        login = False
+        window, event, values = sg.read_all_windows()
 
 
-        if window == janela2: # Janela que exibe código de ativação
-            if event == sg.WINDOW_CLOSED:
-                sair = sg.popup('Você tem certeza que deseja sair?\n'
-                                'Ao sair, todos os processos e informações serão perdidos.',
-                                custom_text=('Sim', 'Não'), no_titlebar=True, keep_on_top=True)
-                if sair == 'Sim':
-                    navegador.quit()
-                    break
+    if window == janela2: # Janela que exibe código de ativação
+        if event == sg.WINDOW_CLOSED:
+            sair = sg.popup('Você tem certeza que deseja sair?\n'
+                            'Ao sair, todos os processos e informações serão perdidos.',
+                            custom_text=('Sim', 'Não'), no_titlebar=True, keep_on_top=True)
+            if sair == 'Sim':
+                navegador.quit()
+                break
 
-            if event == 'Editar número / Gerar novo código':
-                janela2.hide()
+        if event == 'Editar número / Gerar novo código':
+            janela2.hide()
+            janela1.un_hide()
+
+
+    if window == janela3: # Janela para o usuário digitar a mensagem
+        if event == sg.WINDOW_CLOSED:
+            sair = sg.popup('Você tem certeza que deseja sair?\n'
+                            'Ao sair, todos os processos e informações serão perdidos.',
+                            custom_text=('Sim', 'Não'), no_titlebar=True, keep_on_top=True)
+            if sair == 'Sim':
+                navegador.quit()
+                break
+
+        if event == 'Editar número':
+            desconectar = sg.popup('Você tem certeza que deseja conectar outro número?',
+                            custom_text=('Sim', 'Não'), no_titlebar=True, keep_on_top=True)
+            if desconectar == 'Sim':
+                desconectar_whatsapp()
+                login = False
+                janela3.hide()
                 janela1.un_hide()
 
-
-        if window == janela3: # Janela para o usuário digitar a mensagem
-            if event == sg.WINDOW_CLOSED:
-                sair = sg.popup('Você tem certeza que deseja sair?\n'
-                                'Ao sair, todos os processos e informações serão perdidos.',
-                                custom_text=('Sim', 'Não'), no_titlebar=True, keep_on_top=True)
-                if sair == 'Sim':
-                    navegador.quit()
-                    break
-
-            if event == 'Editar número':
-                desconectar = sg.popup('Você tem certeza que deseja conectar outro número?',
-                                custom_text=('Sim', 'Não'), no_titlebar=True, keep_on_top=True)
-                if desconectar == 'Sim':
-                    desconectar_whatsapp()
-                    login = False
-                    janela3.hide()
-                    janela1.un_hide()
-
-            if event == 'Próximo passo':
-                if len(values['mensagem']) == 0:
-                    sg.Popup('Sua mensagem esta vazia!\n'
-                             'Digite uma mensagem para continuar', no_titlebar=True, keep_on_top=True)
+        if event == 'Próximo passo':
+            if len(values['mensagem']) == 0:
+                sg.Popup('Sua mensagem esta vazia!\n'
+                         'Digite uma mensagem para continuar', no_titlebar=True, keep_on_top=True)
+            else:
+                mensagem = values['mensagem']
+                janela3.hide()
+                if exemplo_aberto == False:
+                    janela4 = janela_exemplo()
                 else:
-                    mensagem = values['mensagem']
-                    janela3.hide()
-                    if exemplo_aberto == False:
-                        janela4 = janela_exemplo()
-                    else:
-                        janela5.un_hide()
-
-        if window == janela4: # Janela que exibe como o usuário deve digitar os destinatários
-            if event == sg.WINDOW_CLOSED or event == 'Adicionar destinatários':
-                janela4.hide()
-                janela5.un_hide()
-                exemplo_aberto = True
-
-
-        if window == janela5: # Janela para o usuário digitar os destinatários
-            if event == sg.WINDOW_CLOSED:
-                sair = sg.popup('Você tem certeza que deseja sair?\n'
-                                'Ao sair, todos os processos e informações serão perdidos.',
-                                custom_text=('Sim', 'Não'), no_titlebar=True, keep_on_top=True)
-                if sair == 'Sim':
-                    navegador.quit()
-                    break
-
-            if event == 'Enviar':
-                if len(values['lista_contatos']) == 0:
-                    sg.Popup('Por favor, insira um ou mais destinatários para continuar.',
-                             no_titlebar=True, keep_on_top=True)
-                else:
-                    lista_contatos = []
-                    for contato in str(values['lista_contatos']).split('\n'):
-                        lista_contatos.append(contato.strip())
-                    contatos = lista_contatos
-                    janela5.hide()
-                    sg.popup_no_buttons('Aguarde: enviando mensagens...',
-                                        auto_close=True,
-                                        non_blocking=True,
-                                        keep_on_top=True,
-                                        no_titlebar=True,
-                                        font=(15, 15))
-                    enviar_mensagem(mensagem, contatos)
-                    sg.popup_no_buttons('Mensagens enviadas com sucesso!',
-                                        auto_close=True,
-                                        non_blocking=True,
-                                        keep_on_top=True,
-                                        no_titlebar=True,
-                                        font=(15, 15), auto_close_duration=3)
-                    sleep(3)
                     janela5.un_hide()
 
-            if event == 'Editar mensagem':
-                janela5.hide()
-                janela3.un_hide()
+    if window == janela4: # Janela que exibe como o usuário deve digitar os destinatários
+        if event == sg.WINDOW_CLOSED or event == 'Adicionar destinatários':
+            janela4.hide()
+            janela5.un_hide()
+            exemplo_aberto = True
 
-            if event == 'Exibir exemplo novamente':
+
+    if window == janela5: # Janela para o usuário digitar os destinatários
+        if event == sg.WINDOW_CLOSED:
+            sair = sg.popup('Você tem certeza que deseja sair?\n'
+                            'Ao sair, todos os processos e informações serão perdidos.',
+                            custom_text=('Sim', 'Não'), no_titlebar=True, keep_on_top=True)
+            if sair == 'Sim':
+                navegador.quit()
+                break
+
+        if event == 'Enviar':
+            if len(values['lista_contatos']) == 0:
+                sg.Popup('Por favor, insira um ou mais destinatários para continuar.',
+                         no_titlebar=True, keep_on_top=True)
+            else:
+                lista_contatos = []
+                for contato in str(values['lista_contatos']).split('\n'):
+                    lista_contatos.append(contato.strip())
+                contatos = lista_contatos
                 janela5.hide()
-                janela4.un_hide()
-    except NoSuchWindowException:
-        break
+                sg.popup_no_buttons('Aguarde: enviando mensagens...',
+                                    auto_close=True,
+                                    non_blocking=True,
+                                    keep_on_top=True,
+                                    no_titlebar=True,
+                                    font=(15, 15))
+                enviar_mensagem(mensagem, contatos)
+                sg.popup_no_buttons('Mensagens enviadas com sucesso!',
+                                    auto_close=True,
+                                    non_blocking=True,
+                                    keep_on_top=True,
+                                    no_titlebar=True,
+                                    font=(15, 15), auto_close_duration=3)
+                sleep(3)
+                janela5.un_hide()
+
+        if event == 'Editar mensagem':
+            janela5.hide()
+            janela3.un_hide()
+
+        if event == 'Exibir exemplo novamente':
+            janela5.hide()
+            janela4.un_hide()
