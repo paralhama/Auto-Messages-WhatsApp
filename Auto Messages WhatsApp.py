@@ -1,5 +1,5 @@
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchWindowException, NoSuchElementException
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
@@ -10,7 +10,6 @@ from selenium.webdriver.chrome.options import Options
 import pyperclip
 from selenium.webdriver.common.action_chains import ActionChains
 import PySimpleGUI as sg
-import keyboard
 from time import sleep
 import phonenumbers
 from subprocess import CREATE_NO_WINDOW
@@ -19,6 +18,7 @@ icon = 'icon.ico'
 numero = ''
 mensagem = ''
 exemplo_aberto = False
+conectando_numero = None
 
 service = Service(ChromeDriverManager().install())
 service.creation_flags = CREATE_NO_WINDOW
@@ -27,8 +27,6 @@ options.add_argument("--log-level=OFF")
 options.add_argument("--window-position=-2000,-2000")
 options.add_experimental_option('excludeSwitches', ['enable-logging'])
 navegador = webdriver.Chrome(service=service, options=options)
-
-
 
 
 def theme():
@@ -69,6 +67,7 @@ def janela_inserir_numero():
 
 
 def janela_codigo_ativacao():
+    global conectando_numero
     navegador.get("https://web.whatsapp.com/")
     wait = WebDriverWait(navegador, 10)
 
@@ -85,8 +84,9 @@ def janela_codigo_ativacao():
         digitar_numero.click()
         digitar_numero.send_keys(numero)
         sleep(2)
+        # Clicar no botão 'Enviar'
         navegador.find_element('xpath',
-                               '//*[@id="app"]/div/div/div[3]/div[1]/div/div[3]/div[3]/div/div/div').click()  # Clicar no botão 'Enviar'
+                               '//*[@id="app"]/div/div/div[3]/div[1]/div/div[3]/div[3]/div/div/div').click()
 
     campo1 = wait.until(EC.visibility_of_element_located(
         (By.XPATH, '//*[@id="app"]/div/div/div[3]/div[1]/div/div/div[2]/div/div/div/div[1]/span')))
@@ -107,18 +107,18 @@ def janela_codigo_ativacao():
         campo8 = navegador.find_element('xpath',
                                         '//*[@id="app"]/div/div/div[3]/div[1]/div/div/div[2]/div/div/div/div[8]/span').text
         codigo_ativacao = f" {campo1} {campo2} {campo3} {campo4} - {campo5} {campo6} {campo7} {campo8} "
-        conectando_numero = navegador.find_element('xpath', '//*[@id="app"]/div/div/div[3]/div[1]/div/div/div[1]/div[2]').text
+        conectando_numero = navegador.find_element('xpath',
+                                                   '//*[@id="app"]/div/div/div[3]/div[1]/div/div/div[1]/div[2]').text
         conectando_numero = conectando_numero.replace("+55 ", "").replace(" (Editar)", "")
 
     theme()
     layout = [
-        [sg.Text('Insira o código no seu celular', font=(20, 20), pad=(None, 10))],
+        [sg.Text('Insira o código no seu celular', font=(20, 20), pad=(0, 10))],
         [sg.Text(codigo_ativacao, key='código', font=(30, 30), background_color='#52DE97', text_color='black')],
         [sg.Text('\n')],
-        [sg.Text(conectando_numero, font=(15,15))],
+        [sg.Text(conectando_numero, font=(15, 15))],
         [sg.Button('Editar número / Gerar novo código', pad=0, font=(15, 15))]
     ]
-
 
     return sg.Window(f'Auto Messages WhatsApp', layout=layout, finalize=True, element_justification='center',
                      icon=icon, size=(550, 250))
@@ -154,8 +154,8 @@ def janela_exemplo():
         [sg.Button('Adicionar destinatários', font=20)]
     ]
 
-    window.set
-    return sg.Window('ATENÇÃO!', layout=layout, finalize=True, element_justification='center', no_titlebar=True, keep_on_top=True)
+    return sg.Window('ATENÇÃO!', layout=layout, finalize=True, element_justification='center', no_titlebar=True,
+                     keep_on_top=True)
 
 
 def janela_contatos():
@@ -185,6 +185,7 @@ def verificar_login():
 
 
 def enviar_mensagem(mensagem, lista_de_contatos):
+    elemento = None
     wait = WebDriverWait(navegador, 10)
 
     # Verifica se a tela inicial foi carregada verificando se o campo de busca de contatos foi carregado.
@@ -230,31 +231,31 @@ def enviar_mensagem(mensagem, lista_de_contatos):
                 Keys.CONTROL + 'v')
             sleep(1)
             navegador.find_element('xpath',
-                                   '//*[@id="app"]/div/span[2]/div/div/div/div/div/div/div/div[1]/div/div/div[2]/div/div[1]/p').send_keys(
-                Keys.ENTER)
+                                   '//*[@id="app"]/div/span[2]/div/div/div/div/div/div/div/div[1]/div/div/div[2]/div/div[1]/p').send_keys(Keys.ENTER)
             sleep(1)
+
             navegador.find_element('xpath',
-                                   '//*[@id="app"]/div/span[2]/div/div/div/div/div/div/div/div[1]/div/div/div[2]/div/div[1]/p').send_keys(
-                Keys.CONTROL + 'A')
+                                   '//*[@id="app"]/div/span[2]/div/div/div/div/div/div/div/div[1]/div/div/div[2]/div/div[1]/p').send_keys(Keys.CONTROL + 'A')
+
             navegador.find_element('xpath',
-                                   '//*[@id="app"]/div/span[2]/div/div/div/div/div/div/div/div[1]/div/div/div[2]/div/div[1]/p').send_keys(
-                Keys.BACKSPACE)
+                                   '//*[@id="app"]/div/span[2]/div/div/div/div/div/div/div/div[1]/div/div/div[2]/div/div[1]/p').send_keys(Keys.BACKSPACE)
 
     sleep(0.5)
     navegador.find_element('xpath',
                            '//*[@id="app"]/div/span[2]/div/div/div/div/div/div/div/span/div/div/div/span').click()
 
 
-
 def desconectar_whatsapp():
     wait = WebDriverWait(navegador, 10)
-    opções = wait.until(EC.visibility_of_element_located((By.XPATH, '//*[@id="app"]/div/div/div[4]/header/div[2]/div/span/div[4]/div/span')))
-    if opções.is_displayed():
-        opções.click()
+    options_disconnect = wait.until(EC.visibility_of_element_located(
+        (By.XPATH, '//*[@id="app"]/div/div/div[4]/header/div[2]/div/span/div[4]/div/span')))
+    if options_disconnect.is_displayed():
+        options_disconnect.click()
 
-    desconectar = wait.until(EC.visibility_of_element_located((By.XPATH, '//*[@id="app"]/div/div/div[4]/header/div[2]/div/span/div[4]/span/div/ul/li[6]/div')))
-    if desconectar.is_displayed():
-        desconectar.click()
+    disconnect = wait.until(EC.visibility_of_element_located(
+        (By.XPATH, '//*[@id="app"]/div/div/div[4]/header/div[2]/div/span/div[4]/span/div/ul/li[6]/div')))
+    if disconnect.is_displayed():
+        disconnect.click()
 
     confirmar = wait.until(EC.visibility_of_element_located(
         (By.XPATH, '//*[@id="app"]/div/span[2]/div/div/div/div/div/div/div[3]/div/button[2]/div/div')))
@@ -273,21 +274,19 @@ while True:
     try:
         login = verificar_login()
         window, event, values = sg.read_all_windows(timeout=1000)
-        if window == janela1: # Janela para inserir número
+        if window == janela1:  # Janela para inserir número
             if event == sg.WINDOW_CLOSED:
                 navegador.quit()
                 break
 
-
             if not str(values['numero']).isnumeric():
                 window['numero'].update(values['numero'][:-1])
-
 
             if len(values['numero']) == 12:
                 window['numero'].update(values['numero'][:-1])
 
             if len(values['numero']) >= 11:
-                checar_numero = phonenumbers.parse('+55'+values['numero'])
+                checar_numero = phonenumbers.parse('+55' + values['numero'])
                 checar_numero = phonenumbers.is_valid_number(checar_numero)
                 if checar_numero:
                     window['botão_enviar_código_ativação'].update(disabled=False)
@@ -311,7 +310,7 @@ while True:
                 janela1.hide()
                 janela2 = janela_codigo_ativacao()
 
-        if login == True and janela2 != None:
+        if login == True and janela2 is not None:
             janela2.close()
             janela2 = None
             sg.popup_no_buttons('WhatsApp conectado com sucesso!',
@@ -325,8 +324,7 @@ while True:
             login = False
             window, event, values = sg.read_all_windows()
 
-
-        if window == janela2: # Janela que exibe código de ativação
+        if window == janela2:  # Janela que exibe código de ativação
             if event == sg.WINDOW_CLOSED:
                 sair = sg.popup('Você tem certeza que deseja sair?\n'
                                 'Ao sair, todos os processos e informações serão perdidos.',
@@ -339,8 +337,7 @@ while True:
                 janela2.hide()
                 janela1.un_hide()
 
-
-        if window == janela3: # Janela para o usuário digitar a mensagem
+        if window == janela3:  # Janela para o usuário digitar a mensagem
             if event == sg.WINDOW_CLOSED:
                 sair = sg.popup('Você tem certeza que deseja sair?\n'
                                 'Ao sair, todos os processos e informações serão perdidos.',
@@ -351,7 +348,7 @@ while True:
 
             if event == 'Editar número':
                 desconectar = sg.popup('Você tem certeza que deseja conectar outro número?',
-                                custom_text=('Sim', 'Não'), no_titlebar=True, keep_on_top=True)
+                                       custom_text=('Sim', 'Não'), no_titlebar=True, keep_on_top=True)
                 if desconectar == 'Sim':
                     desconectar_whatsapp()
                     login = False
@@ -365,19 +362,18 @@ while True:
                 else:
                     mensagem = values['mensagem']
                     janela3.hide()
-                    if exemplo_aberto == False:
+                    if not exemplo_aberto:
                         janela4 = janela_exemplo()
                     else:
                         janela5.un_hide()
 
-        if window == janela4: # Janela que exibe como o usuário deve digitar os destinatários
+        if window == janela4:  # Janela que exibe como o usuário deve digitar os destinatários
             if event == sg.WINDOW_CLOSED or event == 'Adicionar destinatários':
                 janela4.hide()
                 janela5.un_hide()
                 exemplo_aberto = True
 
-
-        if window == janela5: # Janela para o usuário digitar os destinatários
+        if window == janela5:  # Janela para o usuário digitar os destinatários
             if event == sg.WINDOW_CLOSED:
                 sair = sg.popup('Você tem certeza que deseja sair?\n'
                                 'Ao sair, todos os processos e informações serão perdidos.',
